@@ -1,0 +1,32 @@
+# Build output
+**/bin/
+**/obj/
+**/target/
+
+# Compiled binaries
+**/*.so
+**/*.dll
+**/*.exe
+**/*.pdb
+**/*.deps.json
+**/*.runtimeconfig.json
+
+# IDE / Editor
+.vs/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build tools
+.avalonia-build-tasks/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project directories to ignore
+/deadlocked/
+/ColorSplitter/
+/toolpathing_tests/

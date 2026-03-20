@@ -1,0 +1,172 @@
+Script started on 2026-03-20 05:05:57+03:00 [TERM="xterm-256color" TTY="/dev/pts/1" COLUMNS="148" LINES="45"]
+[?u[>0q]11;?\[?1049hP+q696e646e\P+q71756572792d6f732d6e616d65\[?1049l[0c[1m
+
+
+
+
+[36m           [30m.[36m-------------------------:
+          .[32m+=[36m========================.
+         :[32m++[36m===[32m++===[36m===============-       :[32m++[36m-
+        :[32m*++[36m====[32m+++++==[36m===========-        .==:
+       -[32m*+++[36m=====[32m+***++=[36m=========:
+      =[32m*++++=[36m=======------------:
+     =[32m*+++++=[36m====-                     [30m...[36m
+   .[32m+*+++++[36m=-===:                    .[32m=+++=[36m:
+  :[32m++++[36m=====-==:                     -***[32m**[36m+
+ :[32m++=[36m=======-=.                      .=+**+[30m.[36m
+.[32m+[36m==========-.                          [30m.[36m
+ :[32m+++++++[36m====-                                [30m.[36m--==-[30m.[36m
+  :[32m++[36m==========.                             [30m:[32m+++++++[36m[30m:
+   [36m.-===========.                            =*****+*+
+    [36m.-===========:                           .+*****+:
+      [36m-=======[32m++++[36m:::::::::::::::::::::::::-:  [30m.[36m---:
+       :======[32m++++[36m====[32m+++******************=.
+        [36m:=====[32m+++[36m==========[32m++++++++++++++*-
+         [36m.====[32m++[36m==============[32m++++++++++*-
+          [36m.===[32m+[36m==================[32m+++++++:
+           [36m.-=======================[32m+++:
+             [30m..........................[m[1G[26A[m[?7l[58C
+[58C[m[90m┌──────────────────────Donanım──────────────────────┐[m
+[58C[m[1m[32m│ ├[m[m: [mAMD Ryzen 5 5500 (12) @ 4.27 GHz
+[58C[m[1m[32m│ ├󰍛[m[m: [mNVIDIA GeForce RTX 4060 Ti [Harici][m
+[58C[m[1m[32m│ ├󰍛[m[m: [m7.53 GiB / 15.41 GiB ([32m49%[m)
+[58C[m[1m[32m└ └[m[m: [m647.30 GiB / 935.85 GiB ([93m69%[m) - ext4
+[58C[m[90m└────────────────────────────────────────────────────┘[m
+[58C
+[58C[m[90m┌──────────────────────Yazılım──────────────────────┐[m
+[58C[m[1m[33m OS[m[m: [mCachyOS x86_64
+[58C[m[1m[33m│ ├[m[m: [mLinux 6.19.7-1-cachyos
+[58C[m[1m[33m│ ├[m[m: [m4002 (5.17)
+[58C[m[1m[33m│ ├󰏖[m[m: [m1905 (pacman), 53 (flatpak)
+[58C[m[1m[33m└ └[m[m: [mfish 4.5.0
+[58C
+[58C[m[1m[34m DE[m[m: [mKDE Plasma 6.6.3
+[58C[m[1m[34m│ ├[m[m: [msddm-autologin 0.21.0 (Wayland)
+[58C[m[1m[34m│ ├[m[m: [mKWin (Wayland)
+[58C[m[1m[34m│ ├󰉼[m[m: [mChromeOS-dark
+[58C[m[1m[34m└ └[m[m: [malacritty 0.16.1
+[58C[m[90m└────────────────────────────────────────────────────┘[m
+[58C
+[58C[m[90m┌────────────────────Kullanım / Süre / DT────────────────────┐[m
+[58C[m[1m[35m  OS Age [m[m: [m135 days
+[58C[m[1m[35m  Uptime [m[m: [m3 hours, 12 mins
+[58C[m[1m[35m  DateTime [m[m: [m2026-03-20 05:05:57
+[58C[m[90m└─────────────────────────────────────────────────────────┘[m
+[58C[m  [38m● [37m● [36m● [35m● [34m● [33m● [32m● [31m●[m
+[?7h]7;file://buzul-x8664/home/rewilh/autodraw/autodraw[K]0;~/autodraw/autodraw - fish[m]11;?\[6n[0c[?2004h[?2031h[=5u[K]133;A;click_events=1\[34m~/autodraw/autodraw [90mmain[90m*
+[35m❯[m ]133;B[K[2C[?2004l[?2031l[=0u[?2004h[?2031h[=5uscript output.txt[19C[17Dscript [36;4moutput.txt[m[19C[?2004l[?2031l[=0u[?2004h[?2031h[=5u[17Ddotnet run[K[12C[10Ddotnet [36mrun[m[12C[?2004l[?2031l[=0u[12C
+[m]133;C;cmdline_url=dotnet%20run]0;~/autodraw/autodraw: dotnet run - dotnet[m[?1h=[?25l[1F
+[?25h[?25l[1F
+[?25h[?25l[1F
+[?25h[?25l[1F
+[?25h[?25l[1F
+[?25h[?25l[1F
+[?25h[?25l[1F
+[?25h[?25l[1F
+[?25h[?25l[1F
+csproj
+[?25h[?25l[2F
+[120G[6D(0,0s)
+[?25h[?25l[2F
+[120G[6D(0,1s)
+[?25h[?25l[2F
+[120G[6D(0,1s)
+[?25h[?25l[2F
+[120G[6D(0,1s)
+[?25h[?25l[2F
+[120G[6D(0,2s)
+[?25h[?25l[2F
+[120G[6D(0,2s)
+[?25h[?25l[2F
+[120G[6D(0,2s)
+[?25h[?25l[2F
+[120G[6D(0,3s)
+[?25h[?25l[2F
+[120G[6D(0,3s)
+[?25h[?25l[2F
+[120G[6D(0,3s)
+[?25h[?25l[2F
+[120G[6D(0,4s)
+[?25h[?25l[2F
+[120G[6D(0,4s)
+[?25h[?25l[2F
+[120G[6D(0,5s)
+[?25h[?25l[2F
+[120G[6D(0,5s)
+[?25h[?25l[2F
+[120G[6D(0,5s)
+[?25h[?25l[2F
+[120G[6D(0,6s)
+[?25h[?25l[2F
+[120G[6D(0,6s)
+[?25h[?25l[2F
+[120G[6D(0,6s)
+[?25h[?25l[2F
+[120G[6D(0,7s)
+[?25h[?25l[2F
+[120G[6D(0,7s)
+[?25h[2F
+[J[?25l[1F
+  /home/rewilh/autodraw/autodraw/Autodraw.csproj [36;1mnet8.0[m [35;1mlinux-x64[m [120G[14DRestore (0,7s)
+[?25h[2F
+[J[?1h=Loading Compiled Code
+tr
+Copying /home/rewilh/.local/share/AutoDraw/Themes/Anime\character.png
+Copying /home/rewilh/.local/share/AutoDraw/Themes/Anime\anime.axaml
+Copying /home/rewilh/.local/share/AutoDraw/Themes/Landscape\landscape.jpg
+Copying /home/rewilh/.local/share/AutoDraw/Themes/Landscape\landscape.axaml
+System.DllNotFoundException: Unable to load shared library 'libautodraw_uinput.so' or one of its dependencies. In order to help diagnose loading problems, consider using a tool like strace. If you're using glibc, consider setting the LD_DEBUG environment variable: 
+/home/rewilh/autodraw/autodraw/bin/Debug/net8.0/linux-x64/libautodraw_uinput.so: cannot open shared object file: No such file or directory
+/usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.25/libautodraw_uinput.so: cannot open shared object file: No such file or directory
+/home/rewilh/autodraw/autodraw/bin/Debug/net8.0/linux-x64/liblibautodraw_uinput.so: cannot open shared object file: No such file or directory
+/usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.25/liblibautodraw_uinput.so: cannot open shared object file: No such file or directory
+/home/rewilh/autodraw/autodraw/bin/Debug/net8.0/linux-x64/libautodraw_uinput.so.so: cannot open shared object file: No such file or directory
+/usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.25/libautodraw_uinput.so.so: cannot open shared object file: No such file or directory
+/home/rewilh/autodraw/autodraw/bin/Debug/net8.0/linux-x64/liblibautodraw_uinput.so.so: cannot open shared object file: No such file or directory
+/usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.25/liblibautodraw_uinput.so.so: cannot open shared object file: No such file or directory
+
+   at Autodraw.Input.mouse_init()
+   at Autodraw.Input.EnsureInit() in /home/rewilh/autodraw/autodraw/Input.cs:line 57
+   at Autodraw.Input.Start() in /home/rewilh/autodraw/autodraw/Input.cs:line 64
+   at Autodraw.MainWindow..ctor() in /home/rewilh/autodraw/autodraw/MainWindow.axaml.cs:line 142
+   at Autodraw.App.OnFrameworkInitializationCompleted() in /home/rewilh/autodraw/autodraw/App.axaml.cs:line 176
+   at Avalonia.AppBuilder.SetupUnsafe()
+   at Avalonia.AppBuilder.Setup()
+   at Avalonia.AppBuilder.SetupWithLifetime(IApplicationLifetime lifetime)
+   at Avalonia.ClassicDesktopStyleApplicationLifetimeExtensions.StartWithClassicDesktopLifetime(AppBuilder builder, String[] args, Action`1 lifetimeBuilder)
+   at Autodraw.Program.Main(String[] args) in /home/rewilh/autodraw/autodraw/Program.cs:line 19
+Unable to load shared library 'libautodraw_uinput.so' or one of its dependencies. In order to help diagnose loading problems, consider using a tool like strace. If you're using glibc, consider setting the LD_DEBUG environment variable: 
+/home/rewilh/autodraw/autodraw/bin/Debug/net8.0/linux-x64/libautodraw_uinput.so: cannot open shared object file: No such file or directory
+/usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.25/libautodraw_uinput.so: cannot open shared object file: No such file or directory
+/home/rewilh/autodraw/autodraw/bin/Debug/net8.0/linux-x64/liblibautodraw_uinput.so: cannot open shared object file: No such file or directory
+/usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.25/liblibautodraw_uinput.so: cannot open shared object file: No such file or directory
+/home/rewilh/autodraw/autodraw/bin/Debug/net8.0/linux-x64/libautodraw_uinput.so.so: cannot open shared object file: No such file or directory
+/usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.25/libautodraw_uinput.so.so: cannot open shared object file: No such file or directory
+/home/rewilh/autodraw/autodraw/bin/Debug/net8.0/linux-x64/liblibautodraw_uinput.so.so: cannot open shared object file: No such file or directory
+/usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.25/liblibautodraw_uinput.so.so: cannot open shared object file: No such file or directory
+
+Unhandled exception. System.DllNotFoundException: Unable to load shared library 'libautodraw_uinput.so' or one of its dependencies. In order to help diagnose loading problems, consider using a tool like strace. If you're using glibc, consider setting the LD_DEBUG environment variable: 
+/home/rewilh/autodraw/autodraw/bin/Debug/net8.0/linux-x64/libautodraw_uinput.so: cannot open shared object file: No such file or directory
+/usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.25/libautodraw_uinput.so: cannot open shared object file: No such file or directory
+/home/rewilh/autodraw/autodraw/bin/Debug/net8.0/linux-x64/liblibautodraw_uinput.so: cannot open shared object file: No such file or directory
+/usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.25/liblibautodraw_uinput.so: cannot open shared object file: No such file or directory
+/home/rewilh/autodraw/autodraw/bin/Debug/net8.0/linux-x64/libautodraw_uinput.so.so: cannot open shared object file: No such file or directory
+/usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.25/libautodraw_uinput.so.so: cannot open shared object file: No such file or directory
+/home/rewilh/autodraw/autodraw/bin/Debug/net8.0/linux-x64/liblibautodraw_uinput.so.so: cannot open shared object file: No such file or directory
+/usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.25/liblibautodraw_uinput.so.so: cannot open shared object file: No such file or directory
+
+   at Autodraw.Input.mouse_init()
+   at Autodraw.Input.EnsureInit() in /home/rewilh/autodraw/autodraw/Input.cs:line 57
+   at Autodraw.Input.Start() in /home/rewilh/autodraw/autodraw/Input.cs:line 64
+   at Autodraw.MainWindow..ctor() in /home/rewilh/autodraw/autodraw/MainWindow.axaml.cs:line 142
+   at Autodraw.App.OnFrameworkInitializationCompleted() in /home/rewilh/autodraw/autodraw/App.axaml.cs:line 176
+   at Avalonia.AppBuilder.SetupUnsafe()
+   at Avalonia.AppBuilder.Setup()
+   at Avalonia.AppBuilder.SetupWithLifetime(IApplicationLifetime lifetime)
+   at Avalonia.ClassicDesktopStyleApplicationLifetimeExtensions.StartWithClassicDesktopLifetime(AppBuilder builder, String[] args, Action`1 lifetimeBuilder)
+   at Autodraw.Program.Main(String[] args) in /home/rewilh/autodraw/autodraw/Program.cs:line 19
+[?1h=]133;D;134[?25h[2m⏎[m                                                                                                                                                   ⏎ [K
+]7;file://buzul-x8664/home/rewilh/autodraw/autodraw]0;~/autodraw/autodraw - fish[m]11;?\[6n[0c[?2004h[?2031h[=5u[K]133;A;click_events=1[34m~/autodraw/autodraw [90mmain[90m*
+[31m❯[m ]133;B[K[2Ce[3C[90mxit[m[3C[91me[90mxit[m[3C[91mx[90mit[m[4C[2Dex[90mit[m[4Ci[90mt[m[5C[3D[91mexi[90mt[m[5C[91mt[m[6C[4Dexit[6C[6C[?2004l[?2031l[=0u[?2004h[?2031h[=5u[K[5C[3D[91mexi[m[5C[?2004l[?2031l[=0u[?2004h[?2031h[=5u[K[4C[2Dex[4C[?2004l[?2031l[=0u[?2004h[?2031h[=5u[K[3C[91me[m[3C[?2004l[?2031l[=0u[?2004h[?2031h[=5u[K[2C[?2004l[?2031l[=0u[?2004h[?2031h[=5u[?2004l[?2031l[=0u[?2004h[?2031h[=5u[?2004l[?2031l[=0u[?2004h[?2031h[=5u[?2004l[?2031l[=0u[?2004h[?2031h[=5u[?2004l[?2031l[=0u[?2004h[?2031h[=5u[?2004l[?2031l[=0u[?2004h[?2031h[=5u[?2004l[?2031l[=0u[?2004h[?2031h[=5u[?2004l[?2031l[=0u[?2004h[?2031h[=5u[?2004l[?2031l[=0u[?2004h[?2031h[=5u[?2004l[?2031l[=0u[?2004h[?2031h[=5ue[3C[90mxit[m[3C[91me[90mxit[m[3C[91mx[90mit[m[4C[2Dex[90mit[m[4Ci[90mt[m[5C[3D[91mexi[90mt[m[5C[91mt[m[6C[6C[4Dexit[6C[?2004l[?2031l[=0u[6C
+[m]133;C;cmdline_url=exit]0;~/autodraw/autodraw: exit - exit[m]133;D;134[?25h[m
+Script done on 2026-03-20 05:06:11+03:00 [COMMAND_EXIT_CODE="134"]
