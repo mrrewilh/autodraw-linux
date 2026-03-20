@@ -7,6 +7,10 @@ chmod +x run_linux.sh
 
 Roadmap
 👍Absolute coordinate mapping for different displays.
+
 👍Dynamic resolution settings.
+
 -Global Keybinds: Implementation of a direct evdev listener in Rust to bypass Wayland's global input restrictions.
+
 -Flatpak packaging.
+
