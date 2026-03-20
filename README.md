@@ -1,7 +1,7 @@
 Be sure your user has permissions to access /dev/uinput:
 sudo usermod -aG input $USER
 
-To build run the .sh
+To build run have the prerequisites (dotnet-sdk 8.0 rust appimagetool) installed, then run .sh; 
 chmod +x run_linux.sh
 ./run_linux.sh
 
