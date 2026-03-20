@@ -15,3 +15,7 @@ Roadmap
 
 -Flatpak packaging.
 
+
+--------------------
+
+Special thanks to the AutoDraw community and AlexDalas & Siydge for the original software. I only built the native Linux bridge for rust that makes it work on x11 and DE's that has a good x11 support. 
