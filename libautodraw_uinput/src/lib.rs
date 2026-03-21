@@ -1,13 +1,15 @@
 use std::fs::File;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::os::fd::AsRawFd;
 use std::ptr;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Mutex;
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use nix::{ioctl_none, ioctl_write_int, ioctl_write_ptr, libc::c_ulong};
 
-// ── Raw input event structures (Linux input_event compatible) ──────────────
+// ── Raw input event structures ─────────────────────────────────────────────
 
 #[derive(Clone, Copy)]
 #[repr(C)]
@@ -71,14 +73,14 @@ struct AbsInfo {
 
 const DEVICE_SETUP: DeviceSetup = DeviceSetup {
     id: InputId {
-        bustype: 0x03, // BUS_USB
+        bustype: 0x03,
         vendor: 0x1234,
         product: 0x5678,
         version: 1,
     },
     name: {
         let mut n = [0u8; 80];
-        let label = b"AutoDraw Virtual Mouse";
+        let label = b"AutoDraw Virtual Mouse+Keyboard";
         let len = if label.len() > 79 { 79 } else { label.len() };
         let mut i = 0;
         while i < len {
@@ -111,11 +113,18 @@ const ABS_X: u16 = 0x00;
 const ABS_Y: u16 = 0x01;
 const BTN_LEFT: u16 = 0x110;
 const BTN_RIGHT: u16 = 0x111;
-
-// ── Button constants exposed to C# ────────────────────────────────────────
+const KEY_ESC: u16 = 1;
+const KEY_LEFTCTRL: u16 = 29;
+const KEY_LEFTSHIFT: u16 = 42;
+const KEY_V: u16 = 47;
 
 pub const AUTODRAW_BUTTON_LEFT: u8 = 0;
 pub const AUTODRAW_BUTTON_RIGHT: u8 = 1;
+
+// ── Global listener state ──────────────────────────────────────────────────
+
+static ESC_PRESSED: AtomicBool = AtomicBool::new(false);
+static LISTENER_RUNNING: AtomicBool = AtomicBool::new(false);
 
 // ── Mouse handle ──────────────────────────────────────────────────────────
 
@@ -124,6 +133,7 @@ pub struct Mouse {
     file: File,
     width: i32,
     height: i32,
+    listener_handle: Mutex<Option<thread::JoinHandle<()>>>,
 }
 
 impl Mouse {
@@ -140,20 +150,21 @@ impl Mouse {
         let fd = file.as_raw_fd();
 
         unsafe {
-            // Enable event types
             ui_set_evbit(fd, EV_SYN as u64).map_err(|e| format!("set_evbit SYN: {e}"))?;
             ui_set_evbit(fd, EV_ABS as u64).map_err(|e| format!("set_evbit ABS: {e}"))?;
             ui_set_evbit(fd, EV_KEY as u64).map_err(|e| format!("set_evbit KEY: {e}"))?;
 
-            // Enable absolute axes
             ui_set_absbit(fd, ABS_X as u64).map_err(|e| format!("set_absbit X: {e}"))?;
             ui_set_absbit(fd, ABS_Y as u64).map_err(|e| format!("set_absbit Y: {e}"))?;
 
-            // Enable buttons
             ui_set_keybit(fd, BTN_LEFT as u64).map_err(|e| format!("set_keybit LEFT: {e}"))?;
             ui_set_keybit(fd, BTN_RIGHT as u64).map_err(|e| format!("set_keybit RIGHT: {e}"))?;
+            ui_set_keybit(fd, KEY_ESC as u64).map_err(|e| format!("set_keybit ESC: {e}"))?;
+            ui_set_keybit(fd, KEY_LEFTCTRL as u64).map_err(|e| format!("set_keybit LCTRL: {e}"))?;
+            ui_set_keybit(fd, KEY_LEFTSHIFT as u64)
+                .map_err(|e| format!("set_keybit LSHIFT: {e}"))?;
+            ui_set_keybit(fd, KEY_V as u64).map_err(|e| format!("set_keybit V: {e}"))?;
 
-            // Configure ABS_X range: 0 .. width-1
             ui_abs_setup(
                 fd,
                 &UinputAbsSetup {
@@ -170,7 +181,6 @@ impl Mouse {
             )
             .map_err(|e| format!("abs_setup X: {e}"))?;
 
-            // Configure ABS_Y range: 0 .. height-1
             ui_abs_setup(
                 fd,
                 &UinputAbsSetup {
@@ -195,6 +205,7 @@ impl Mouse {
             file,
             width,
             height,
+            listener_handle: Mutex::new(None),
         })
     }
 
@@ -223,33 +234,26 @@ impl Mouse {
         })
     }
 
-    /// Send absolute position via EV_ABS + SYN_REPORT, then sleep for interval.
     fn move_abs(&mut self, x: i32, y: i32, interval_100ns: u64) -> Result<(), String> {
         let x = x.clamp(0, self.width - 1);
         let y = y.clamp(0, self.height - 1);
-
         let time = Self::now_timeval();
-
         self.write_event(&InputEvent {
             time,
             event_type: EV_ABS,
             code: ABS_X,
             value: x,
         })?;
-
         self.write_event(&InputEvent {
             time,
             event_type: EV_ABS,
             code: ABS_Y,
             value: y,
         })?;
-
         self.send_syn(time)?;
-
         if interval_100ns > 0 {
             thread::sleep(ticks_to_duration(interval_100ns));
         }
-
         Ok(())
     }
 
@@ -259,9 +263,7 @@ impl Mouse {
             AUTODRAW_BUTTON_RIGHT => BTN_RIGHT,
             _ => return Err(format!("unknown button id: {button}")),
         };
-
         let time = Self::now_timeval();
-
         self.write_event(&InputEvent {
             time,
             event_type: EV_KEY,
@@ -269,6 +271,46 @@ impl Mouse {
             value: pressed as i32,
         })?;
         self.send_syn(time)
+    }
+
+    fn key_event(&mut self, key_code: u16, pressed: bool) -> Result<(), String> {
+        let time = Self::now_timeval();
+        self.write_event(&InputEvent {
+            time,
+            event_type: EV_KEY,
+            code: key_code,
+            value: pressed as i32,
+        })?;
+        self.send_syn(time)
+    }
+
+    fn paste_hex(&mut self, hex: &str) -> Result<(), String> {
+        let mut child = std::process::Command::new("xclip")
+            .arg("-selection")
+            .arg("clipboard")
+            .arg("-i")
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .spawn()
+            .map_err(|e| format!("failed to spawn xclip: {e}"))?;
+
+        if let Some(mut stdin) = child.stdin.take() {
+            stdin
+                .write_all(hex.as_bytes())
+                .map_err(|e| format!("xclip write: {e}"))?;
+        }
+        child.wait().map_err(|e| format!("xclip wait: {e}"))?;
+
+        thread::sleep(Duration::from_millis(10));
+        self.key_event(KEY_LEFTCTRL, true)?;
+        thread::sleep(Duration::from_millis(5));
+        self.key_event(KEY_V, true)?;
+        thread::sleep(Duration::from_millis(5));
+        self.key_event(KEY_V, false)?;
+        thread::sleep(Duration::from_millis(5));
+        self.key_event(KEY_LEFTCTRL, false)?;
+        Ok(())
     }
 }
 
@@ -280,7 +322,6 @@ impl Drop for Mouse {
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-/// Convert .NET 100-nanosecond units to Duration.
 fn ticks_to_duration(ticks: u64) -> Duration {
     if ticks == 0 {
         Duration::ZERO
@@ -289,11 +330,45 @@ fn ticks_to_duration(ticks: u64) -> Duration {
     }
 }
 
+fn start_listener(path: String) {
+    LISTENER_RUNNING.store(true, Ordering::SeqCst);
+    thread::spawn(move || {
+        let mut evdev = match File::open(&path) {
+            Ok(f) => f,
+            Err(e) => {
+                eprintln!("[Listener] Cannot open {path}: {e}");
+                LISTENER_RUNNING.store(false, Ordering::SeqCst);
+                return;
+            }
+        };
+        eprintln!("[Listener] Listening on {path}");
+        let mut buf = [0u8; 24];
+        loop {
+            if !LISTENER_RUNNING.load(Ordering::SeqCst) {
+                break;
+            }
+            match evdev.read_exact(&mut buf) {
+                Ok(()) => {
+                    let event_type = u16::from_le_bytes([buf[16], buf[17]]);
+                    let code = u16::from_le_bytes([buf[18], buf[19]]);
+                    let value = i32::from_le_bytes([buf[20], buf[21], buf[22], buf[23]]);
+                    if event_type == EV_KEY && code == KEY_ESC && value == 1 {
+                        ESC_PRESSED.store(true, Ordering::SeqCst);
+                        eprintln!("[Listener] ESC pressed");
+                    }
+                }
+                Err(_) => {
+                    thread::sleep(Duration::from_millis(100));
+                }
+            }
+        }
+        eprintln!("[Listener] Stopped");
+        LISTENER_RUNNING.store(false, Ordering::SeqCst);
+    });
+}
+
 // ── FFI functions ─────────────────────────────────────────────────────────
 
-/// Initialise a virtual mouse device via /dev/uinput.
-/// `width` and `height` set the absolute coordinate range.
-/// Returns an opaque handle on success, null on failure.
 #[no_mangle]
 pub extern "C" fn mouse_init(width: i32, height: i32) -> *mut Mouse {
     match Mouse::new(width, height) {
@@ -302,12 +377,6 @@ pub extern "C" fn mouse_init(width: i32, height: i32) -> *mut Mouse {
     }
 }
 
-/// Move the virtual mouse to absolute coordinates (x, y), then sleep.
-///
-/// `interval_100ns` is in .NET 100-nanosecond ticks.
-/// Coordinates are clamped to the screen range set during init.
-///
-/// Returns 0 on success, -1 on failure.
 #[no_mangle]
 pub extern "C" fn mouse_move_abs(handle: *mut Mouse, x: i32, y: i32, interval_100ns: u64) -> i32 {
     if handle.is_null() {
@@ -320,12 +389,6 @@ pub extern "C" fn mouse_move_abs(handle: *mut Mouse, x: i32, y: i32, interval_10
     }
 }
 
-/// Press or release a mouse button, then sleep for `click_delay_100ns`.
-///
-/// `button`: AUTODRAW_BUTTON_LEFT (0) or AUTODRAW_BUTTON_RIGHT (1).
-/// `is_pressed`: 1 = press, 0 = release.
-///
-/// Returns 0 on success, -1 on failure.
 #[no_mangle]
 pub extern "C" fn mouse_click(
     handle: *mut Mouse,
@@ -349,7 +412,80 @@ pub extern "C" fn mouse_click(
     }
 }
 
-/// Destroy the virtual mouse device and free the handle.
+#[no_mangle]
+pub extern "C" fn key_event(handle: *mut Mouse, key_code: u16, pressed: i32) -> i32 {
+    if handle.is_null() {
+        return -1;
+    }
+    let mouse = unsafe { &mut *handle };
+    match mouse.key_event(key_code, pressed != 0) {
+        Ok(()) => 0,
+        Err(_) => -1,
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn paste_hex(handle: *mut Mouse, hex: *const i8) -> i32 {
+    if handle.is_null() || hex.is_null() {
+        return -1;
+    }
+    let mouse = unsafe { &mut *handle };
+    let cstr = unsafe { std::ffi::CStr::from_ptr(hex) };
+    let hex_str = match cstr.to_str() {
+        Ok(s) => s,
+        Err(_) => return -1,
+    };
+    match mouse.paste_hex(hex_str) {
+        Ok(()) => 0,
+        Err(e) => {
+            eprintln!("[paste_hex] {e}");
+            -1
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn start_keyboard_listener(event_path: *const i8) -> i32 {
+    if LISTENER_RUNNING.load(Ordering::SeqCst) {
+        return 0;
+    }
+    let path = if event_path.is_null() {
+        "/dev/input/event0".to_string()
+    } else {
+        let cstr = unsafe { std::ffi::CStr::from_ptr(event_path) };
+        match cstr.to_str() {
+            Ok(s) => s.to_string(),
+            Err(_) => return -1,
+        }
+    };
+    ESC_PRESSED.store(false, Ordering::SeqCst);
+    start_listener(path);
+    0
+}
+
+#[no_mangle]
+pub extern "C" fn stop_keyboard_listener() {
+    LISTENER_RUNNING.store(false, Ordering::SeqCst);
+}
+
+#[no_mangle]
+pub extern "C" fn get_esc_flag() -> i32 {
+    if ESC_PRESSED.swap(false, Ordering::SeqCst) {
+        1
+    } else {
+        0
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn listener_is_running() -> i32 {
+    if LISTENER_RUNNING.load(Ordering::SeqCst) {
+        1
+    } else {
+        0
+    }
+}
+
 #[no_mangle]
 pub extern "C" fn mouse_destroy(handle: *mut Mouse) {
     if handle.is_null() {

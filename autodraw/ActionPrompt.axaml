@@ -81,6 +81,7 @@
                         
                         <ComboBoxItem>Key Down</ComboBoxItem>
                         <ComboBoxItem>Key Up</ComboBoxItem>
+                        <ComboBoxItem>Wait (ms)</ComboBoxItem>
                     </ComboBox>
                     
                     <!--Visible for everything else except Text Input-->
@@ -94,17 +95,17 @@
                              IsVisible="False" Text="{Binding InputData}" TextChanged="InputBox_OnTextChanged">
                         
                     </TextBox>
-                </Grid>
-                <Grid Grid.Row="2" >
-                    <Grid.RowDefinitions>Auto,4,Auto</Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>*,4,*</Grid.ColumnDefinitions>
-                    
-                    <Label Grid.Row="0" Grid.Column="0">Speed:</Label>
-                    <Label Grid.Row="0" Grid.Column="2">Delay:</Label>
-                    
-                    <!--Limit to only numbers.-->
-                    <TextBox x:Name="SpeedInput" Text="{Binding Speed}" Grid.Row="2" Grid.Column="0"/>
-                    <TextBox x:Name="DelayInput" Text="{Binding Delay}" Grid.Row="2" Grid.Column="2"/>
+
+                    <Grid Grid.Column="2" x:Name="MovementStylePanel" IsVisible="False" Margin="4,0,0,0">
+                        <Grid.ColumnDefinitions>Auto,4,*,4,Auto,4,60</Grid.ColumnDefinitions>
+                        <Label Grid.Column="0" VerticalContentAlignment="Center" Padding="0" FontSize="11">Style:</Label>
+                        <ComboBox Grid.Column="2" x:Name="MovementStyle" VerticalAlignment="Center" SelectedIndex="{Binding MoveStyleIndex}">
+                            <ComboBoxItem>Teleport</ComboBoxItem>
+                            <ComboBoxItem>Tween (Linear)</ComboBoxItem>
+                        </ComboBox>
+                        <Label Grid.Column="4" x:Name="TweenLabel" IsVisible="False" VerticalContentAlignment="Center" Padding="0" FontSize="11">ms:</Label>
+                        <TextBox Grid.Column="6" x:Name="TweenSpeedBox" IsVisible="False" Text="{Binding TweenDuration}" VerticalContentAlignment="Center"/>
+                    </Grid>
                 </Grid>
             </Grid>
             <Border Grid.Row="2" BorderBrush="Black" BorderThickness="1"/>

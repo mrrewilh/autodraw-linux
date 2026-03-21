@@ -17,7 +17,9 @@ using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using SkiaSharp;
+using System.Threading.Tasks;
 
 namespace Autodraw;
 
@@ -27,6 +29,37 @@ public class ActionDisp
     public InputAction boundAction { get; set; }
     public int Speed { get; set; }
     public int Delay { get; set; }
+    public int Index { get; set; }
+}
+
+public enum BatchItemStatus { Pending, Processing, Done, Skipped }
+
+public class BatchItem
+{
+    public string FileName { get; set; } = string.Empty;
+    public string FullPath { get; set; } = string.Empty;
+    public BatchItemStatus Status { get; set; } = BatchItemStatus.Pending;
+    public Avalonia.Media.Imaging.Bitmap? Thumbnail { get; set; }
+    public void LoadThumbnail() {
+        try { using var stream = File.OpenRead(FullPath); Thumbnail = new Avalonia.Media.Imaging.Bitmap(stream); }
+        catch { }
+    }
+}
+
+public class BatchItemConverter : Avalonia.Data.Converters.IValueConverter
+{
+    public static readonly BatchItemConverter Instance = new();
+    public object? Convert(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture) {
+        if (value is BatchItemStatus status) return status switch {
+            BatchItemStatus.Processing => new Avalonia.Media.SolidColorBrush(0xFF2a6a2a),
+            BatchItemStatus.Done => new Avalonia.Media.SolidColorBrush(0xFF1a4a1a),
+            BatchItemStatus.Skipped => new Avalonia.Media.SolidColorBrush(0xFF6a6a2a),
+            _ => new Avalonia.Media.SolidColorBrush(0x00000000),
+        };
+        return new Avalonia.Media.SolidColorBrush(0x00000000);
+    }
+    public object? ConvertBack(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
+        => throw new NotSupportedException();
 }
 
 public partial class MainWindow : Window
@@ -43,6 +76,11 @@ public partial class MainWindow : Window
     public ObservableCollection<ActionDisp> ActionsContext { get; set; } = new();
     private List<InputAction> _actionStack = new();
     List<SKBitmap> _layersStack = new();
+
+    public ObservableCollection<BatchItem> BatchItems { get; set; } = new();
+    private string _batchFolder = "";
+    private bool _sortAscending = true;
+    private bool _batchRunning = false;
 
     private long _lastMem;
     private long _lastTime = DateTime.Now.ToFileTime();
@@ -603,27 +641,66 @@ public partial class MainWindow : Window
     {
         // TODO: use the warning box (Not implemented yet) system to make it return a "This config does not exist!"
         if (!path.EndsWith(".drawcfg")) return;
-        var lines = File.ReadAllLines(path);
+
+        var content = File.ReadAllText(path);
         SelectedConfigLabel.Content =
             $"{Properties.Resources.ConfigSelected} - {Path.GetFileNameWithoutExtension(path)}";
 
-        DrawIntervalElement.Text = lines.Length > 0 ? lines[0] : "10000";
+        if (content.TrimStart().StartsWith("{"))
+        {
+            var config = JObject.Parse(content);
+            DrawIntervalElement.Text = config["DrawInterval"]?.ToString() ?? "10000";
+            ClickDelayElement.Text = config["ClickDelay"]?.ToString() ?? "1000";
+            maxBlackThresholdElement.Text = config["MaxBlackThreshold"]?.ToString() ?? "127";
+            AlphaThresholdElement.Text = config["AlphaThreshold"]?.ToString() ?? "200";
 
-        ClickDelayElement.Text = lines.Length > 1 ? lines[1] : "1000";
+            if (bool.TryParse(config["FreeDraw"]?.ToString(), out var fd))
+            {
+                FreeDrawCheckbox.IsChecked = fd;
+                Drawing.FreeDraw2 = fd;
+            }
 
-        //maxBlackThresholdElement.Text = lines.Length > 2 ? lines[2] : "127";
-        //AlphaThresholdElement.Text = lines.Length > 3 ? lines[3] : "200";
-        // Silly!!
+            minBlackThresholdElement.Text = config["MinBlackThreshold"]?.ToString() ?? "0";
 
-        if (lines.Length <= 4) return;
-        if (!bool.TryParse(lines[4], out var _fd2)) return;
-        FreeDrawCheckbox.IsChecked = _fd2;
-        Drawing.FreeDraw2 = _fd2;
+            var batchFolder = config["BatchFolder"]?.ToString();
+            if (!string.IsNullOrEmpty(batchFolder))
+            {
+                _batchFolder = batchFolder;
+                BatchFolderPath.Text = batchFolder;
+                LoadBatchFiles();
+            }
 
-        if (lines.Length <= 5) return;
-        //if (!int.TryParse(lines[5], out var _path)) return;
+            _actionStack.Clear();
+            if (config["Actions"] is JArray actions)
+            {
+                foreach (var actionObj in actions)
+                {
+                    var actionType = Enum.TryParse<InputAction.ActionType>(actionObj["Action"]?.ToString(), out var at)
+                        ? at : InputAction.ActionType.LeftClick;
+                    var posObj = actionObj["Position"];
+                    Vector2? pos = posObj != null
+                        ? new Vector2((float)posObj["X"], (float)posObj["Y"])
+                        : null;
+                    var data = actionObj["Data"]?.ToString();
+                    var action = new InputAction(actionType, (object?)pos ?? data);
+                    action.Delay = actionObj["Delay"]?.Value<int>() ?? 0;
+                    if (int.TryParse(actionObj["Speed"]?.ToString(), out var spd)) action.Speed = spd;
+                    _actionStack.Add(action);
+                }
+            }
+            UpdateActionsContext();
+        }
+        else
+        {
+            var lines = content.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+            DrawIntervalElement.Text = lines.Length > 0 ? lines[0] : "10000";
+            ClickDelayElement.Text = lines.Length > 1 ? lines[1] : "1000";
 
-        //minBlackThresholdElement.Text = lines.Length > 6 ? lines[6] : "0";
+            if (lines.Length <= 4) return;
+            if (!bool.TryParse(lines[4], out var _fd2)) return;
+            FreeDrawCheckbox.IsChecked = _fd2;
+            Drawing.FreeDraw2 = _fd2;
+        }
     }
 
     public async void SaveConfigViaDialog(object? sender, RoutedEventArgs e)
@@ -639,18 +716,28 @@ public partial class MainWindow : Window
             await using var stream = await file.OpenWriteAsync();
             await using var streamWriter = new StreamWriter(stream);
 
-            string?[] values =
+            var actionsJson = _actionStack.Select(a => new JObject
             {
-                DrawIntervalElement.Text,
-                ClickDelayElement.Text,
-                maxBlackThresholdElement.Text,
-                AlphaThresholdElement.Text,
-                FreeDrawCheckbox.IsChecked.ToString(),
-                "", //We should've used Json for future compatibility and freedom to change and remove config variables @gz9.
-                minBlackThresholdElement.Text
+                ["Action"] = a.Action.ToString(),
+                ["Position"] = a.Position.HasValue ? new JObject { ["X"] = a.Position.Value.X, ["Y"] = a.Position.Value.Y } : null,
+                ["Data"] = a.Data,
+                ["Delay"] = a.Delay,
+                ["Speed"] = a.Speed,
+            }).ToArray();
+
+            var config = new JObject
+            {
+                ["DrawInterval"] = DrawIntervalElement.Text,
+                ["ClickDelay"] = ClickDelayElement.Text,
+                ["MaxBlackThreshold"] = maxBlackThresholdElement.Text,
+                ["AlphaThreshold"] = AlphaThresholdElement.Text,
+                ["FreeDraw"] = FreeDrawCheckbox.IsChecked.ToString(),
+                ["MinBlackThreshold"] = minBlackThresholdElement.Text,
+                ["BatchFolder"] = _batchFolder,
+                ["Actions"] = new JArray(actionsJson),
             };
 
-            await streamWriter.WriteAsync(string.Join("\r\n", values));
+            await streamWriter.WriteAsync(config.ToString(Formatting.Indented));
         }
     }
 
@@ -725,8 +812,9 @@ public partial class MainWindow : Window
         ActionsContext.Clear();
 
         // Populate ActionsContext with relevant data from _actionStack
-        foreach (var action in _actionStack)
+        for (int i = 0; i < _actionStack.Count; i++)
         {
+            var action = _actionStack[i];
             var _ActionType = "";
             if (action.Action == InputAction.ActionType.KeyDown) _ActionType = "Key Down";
             else if (action.Action == InputAction.ActionType.KeyUp) _ActionType = "Key Up";
@@ -734,6 +822,7 @@ public partial class MainWindow : Window
             else if (action.Action == InputAction.ActionType.RightClick) _ActionType = "Right Click";
             else if (action.Action == InputAction.ActionType.WriteString) _ActionType = "Write String";
             else if (action.Action == InputAction.ActionType.MoveTo) _ActionType = "Move to";
+            else if (action.Action == InputAction.ActionType.Wait) _ActionType = "Wait";
             
             var _ActionData = action.Data is null ? $" @ x={action.Position.Value.X}, y={action.Position.Value.Y}" : $" - {action.Data}";
             
@@ -741,9 +830,138 @@ public partial class MainWindow : Window
             { 
                 Text = $"{_ActionType}{_ActionData}",
                 boundAction = action,
+                Index = i,
             };
 
             ActionsContext.Add(actionDisp);
+        }
+    }
+
+    // ── Batch Management ─────
+
+    private async void BatchFolderPicker_Click(object? sender, RoutedEventArgs e)
+    {
+        var folder = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions { AllowMultiple = false });
+        if (folder.Count != 1) return;
+        _batchFolder = folder[0].TryGetLocalPath();
+        BatchFolderPath.Text = _batchFolder;
+        LoadBatchFiles();
+    }
+
+    private void LoadBatchFiles()
+    {
+        BatchItems.Clear();
+        if (string.IsNullOrEmpty(_batchFolder) || !Directory.Exists(_batchFolder)) return;
+
+        var extensions = new[] { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp" };
+        var files = Directory.GetFiles(_batchFolder)
+            .Where(f => extensions.Contains(Path.GetExtension(f).ToLowerInvariant()));
+
+        if (_sortAscending) files = files.OrderBy(f => Path.GetFileName(f));
+        else files = files.OrderByDescending(f => Path.GetFileName(f));
+
+        foreach (var file in files)
+        {
+            var item = new BatchItem
+            {
+                FileName = Path.GetFileName(file),
+                FullPath = file,
+            };
+            item.LoadThumbnail();
+            BatchItems.Add(item);
+        }
+
+        BatchStatus.Content = $"{BatchItems.Count} files loaded";
+    }
+
+    private void SortAZ_Click(object? sender, RoutedEventArgs e)
+    {
+        _sortAscending = true;
+        LoadBatchFiles();
+    }
+
+    private void SortZA_Click(object? sender, RoutedEventArgs e)
+    {
+        _sortAscending = false;
+        LoadBatchFiles();
+    }
+
+    private async void BeginAutomation_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_batchRunning || BatchItems.Count == 0) return;
+        _batchRunning = true;
+
+        try
+        {
+            for (int i = 0; i < BatchItems.Count; i++)
+            {
+                if (!_batchRunning) break;
+
+                var item = BatchItems[i];
+                item.Status = BatchItemStatus.Processing;
+                BatchItems[i] = item;
+
+                try
+                {
+                    ImportImage(item.FullPath);
+                    await Task.Delay(200);
+
+                    if (_processedBitmap == null)
+                    {
+                        ProcessButtonOnClick(null, new RoutedEventArgs());
+                    }
+
+                    if (_layersStack.Count > 0)
+                        new Preview().ReadyStackDraw(_preFxBitmap, _layersStack, _actionStack);
+                    else
+                        new Preview().ReadyDraw(_processedBitmap);
+
+                    while (Drawing.IsDrawing && _batchRunning)
+                        await Task.Delay(100);
+
+                    item.Status = _batchRunning ? BatchItemStatus.Done : BatchItemStatus.Skipped;
+                }
+                catch
+                {
+                    item.Status = BatchItemStatus.Skipped;
+                }
+
+                BatchItems[i] = item;
+            }
+
+            BatchStatus.Content = _batchRunning ? "Batch complete!" : "Batch cancelled";
+        }
+        finally
+        {
+            _batchRunning = false;
+        }
+    }
+
+    private void DeleteAction_Click(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is int index && index >= 0 && index < _actionStack.Count)
+        {
+            _actionStack.RemoveAt(index);
+            UpdateActionsContext();
+        }
+    }
+
+    private void EditAction_Click(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is int index && index >= 0 && index < _actionStack.Count)
+        {
+            var prompt = new ActionPrompt();
+            prompt.LoadFrom(_actionStack[index]);
+            prompt.Callback = () =>
+            {
+                if (prompt.Action is not null)
+                {
+                    _actionStack[index] = prompt.Action;
+                    UpdateActionsContext();
+                }
+                prompt.Close();
+            };
+            prompt.Show();
         }
     }
 
@@ -756,6 +974,7 @@ public partial class MainWindow : Window
         if (e.Key == Key.Escape)
         {
             Drawing.FlagStopDrawing = true;
+            _batchRunning = false;
             e.Handled = true;
         }
 

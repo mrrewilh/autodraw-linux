@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -24,7 +25,8 @@ public class InputAction
         MoveTo,
         WriteString,
         KeyDown,
-        KeyUp
+        KeyUp,
+        Wait
     }
 
     public ActionType Action { get; set; }
@@ -55,6 +57,17 @@ public class InputAction
             case ActionType.KeyUp:
                 Data = data as string;
                 break;
+
+            case ActionType.Wait:
+                if (data is int waitMs)
+                {
+                    Delay = waitMs;
+                }
+                else if (data is string waitStr && int.TryParse(waitStr, out int parsed))
+                {
+                    Delay = parsed;
+                }
+                break;
         }
     }
 
@@ -62,9 +75,28 @@ public class InputAction
     {
         switch (Action)
         {
-            //TODO LATER: Add Speed and Delay functions to actions
             case ActionType.MoveTo:
-                Input.MoveTo((short)Position.Value.X, (short)Position.Value.Y);
+                if (Speed.HasValue && Speed.Value > 0)
+                {
+                    var startX = (short)Position.Value.X;
+                    var startY = (short)Position.Value.Y;
+                    int steps = Speed.Value;
+                    float startCurX = Input.mousePos.X;
+                    float startCurY = Input.mousePos.Y;
+                    for (int i = 1; i <= steps; i++)
+                    {
+                        float t = (float)i / steps;
+                        short interpX = (short)(startCurX + (startX - startCurX) * t);
+                        short interpY = (short)(startCurY + (startY - startCurY) * t);
+                        Input.MoveTo(interpX, interpY);
+                        Thread.Sleep(1);
+                    }
+                    Input.MoveTo(startX, startY);
+                }
+                else
+                {
+                    Input.MoveTo((short)Position.Value.X, (short)Position.Value.Y);
+                }
                 break;
 
             case ActionType.LeftClick:
@@ -78,7 +110,12 @@ public class InputAction
                 break;
 
             case ActionType.WriteString:
-                Input.SendText(Data);
+                var text = Data;
+                if (!string.IsNullOrEmpty(text) && text.Contains("{FileName}"))
+                {
+                    text = text.Replace("{FileName}", Drawing.BatchFileName);
+                }
+                Input.SendText(text);
                 break;
 
             case ActionType.KeyDown:
@@ -93,6 +130,10 @@ public class InputAction
                 {
                     Input.SendKeyUp((KeyCode)kc2);
                 }
+                break;
+
+            case ActionType.Wait:
+                Thread.Sleep(Delay);
                 break;
         }
     }
@@ -118,6 +159,7 @@ public static class Drawing
     public static bool IsPaused;
     public static bool IsSkipping;
     public static bool FreeDraw2 = false;
+    public static string BatchFileName = "";
 
     public static Vector2 LastPos = Config.Preview_LastLockPos;
 
@@ -128,7 +170,6 @@ public static class Drawing
     private static DrawDataDisplay? _dataDisplay;
 
     private static int _totalScanSize;
-    private static int _completeTotalScan;
 
     // Functions
 
@@ -144,7 +185,6 @@ public static class Drawing
     private static unsafe byte[,] Scan(SKBitmap bitmap)
     {
         _totalScanSize = 0;
-        _completeTotalScan = 0;
         var _pixelArray = new byte[bitmap.Width, bitmap.Height];
         var bitPtr = (byte*)bitmap.GetPixels().ToPointer();
 
@@ -532,8 +572,6 @@ public static class Drawing
                data[(int)position.X, (int)position.Y] == 1;
     }
 
-    private static bool StackHalted;
-
     // ── Drawing keybind flags (set by MainWindow KeyDown handler) ─────────
 
     public static bool FlagStopDrawing;
@@ -542,13 +580,13 @@ public static class Drawing
 
     public static async Task<bool> DrawStack(List<SKBitmap> stack, List<InputAction> actions, Vector2 position)
     {
-        StackHalted = false;
         FlagStopDrawing = false;
 
         foreach (SKBitmap bitmap in stack)
         {
             List<InputAction> actionsCopy = new(actions.Select(act => new InputAction(act.Action, act.Data is not null ? act.Data : act.Position)));
             if (FlagStopDrawing) break;
+            if (Input.CheckEscFlag()) Halt();
             
             // Pre-Process Actions:
             Color color = ImageProcessing.GetColor(bitmap);
@@ -639,6 +677,7 @@ public static class Drawing
                 if (FlagStopDrawing) { Halt(); FlagStopDrawing = false; }
                 if (FlagPauseDrawing) { IsPaused = !IsPaused; FlagPauseDrawing = false; }
                 if (FlagSkipRescan) { if (!NoRescan) SkipRescan = true; }
+                if (Input.CheckEscFlag()) Halt();
 
                 ActionComplete++;
                 if (!IsDrawing) break;

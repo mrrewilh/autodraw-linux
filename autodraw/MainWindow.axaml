@@ -288,36 +288,25 @@
                                             </ItemsPanelTemplate>
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Panel HorizontalAlignment="Stretch" Height="40">
-                                                    <Border Background="#3000" CornerRadius="4" Padding="8 4">
+                                            <DataTemplate DataType="local:ActionDisp">
+                                                <Grid HorizontalAlignment="Stretch" Height="40">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="28"/>
+                                                        <ColumnDefinition Width="28"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border Grid.Column="0" Background="#3000" CornerRadius="4" Padding="8 4">
                                                         <Label VerticalAlignment="Center" Content="{Binding Text}"/>
                                                     </Border>
-                                                    <Button Cursor="Hand" Classes="Invisible" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                                                            Command="{Binding $parent[local:MainWindow].ClickActionObject}" CommandParameter="{Binding boundAction}"/>
-                                                </Panel>
+                                                    <Button Grid.Column="1" FontSize="14" Padding="0" VerticalAlignment="Center"
+                                                            HorizontalAlignment="Center" CornerRadius="4" Background="transparent"
+                                                            Click="EditAction_Click" Tag="{Binding Index}">&#x270E;</Button>
+                                                    <Button Grid.Column="2" FontSize="14" Padding="0" VerticalAlignment="Center"
+                                                            HorizontalAlignment="Center" CornerRadius="4" Background="transparent"
+                                                            Click="DeleteAction_Click" Tag="{Binding Index}">&#x2716;</Button>
+                                                </Grid>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
-                                        <!-- EXAMPLES
-                                        <Panel HorizontalAlignment="Stretch" Height="40">
-                                            <Border Background="#3000" CornerRadius="4" Padding="4">
-                                                <Label VerticalAlignment="Center">Mouse to: x:400 y:200</Label>
-                                            </Border>
-                                            <Button Cursor="Hand" Classes="Invisible" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-                                        </Panel>
-                                        <Panel HorizontalAlignment="Stretch" Height="40">
-                                            <Border Background="#3000" CornerRadius="4" Padding="4">
-                                                <Label VerticalAlignment="Center">Mouse Left Click</Label>
-                                            </Border>
-                                            <Button Cursor="Hand" Classes="Invisible" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-                                        </Panel>
-                                        <Panel HorizontalAlignment="Stretch" Height="40">
-                                            <Border Background="#3000" CornerRadius="4" Padding="4">
-                                                <Label VerticalAlignment="Center">Enter String: "{HEX}\r"</Label>
-                                            </Border>
-                                            <Button Cursor="Hand" Classes="Invisible" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-                                        </Panel>
-                                        -->
                                     </ItemsControl>
                                     
                                     <Panel HorizontalAlignment="Stretch" Height="40">
@@ -332,8 +321,44 @@
                                 </StackPanel>
                             </ScrollViewer>
                         </TabItem>
-                        <TabItem Header="Layers">
-                            
+                        <TabItem Header="Batch">
+                            <StackPanel Spacing="4" Margin="4">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="32"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox Name="BatchFolderPath" Grid.Column="0" Watermark="Select image folder..." VerticalContentAlignment="Center" IsReadOnly="True"/>
+                                    <Button Name="BatchFolderPicker" Grid.Column="1" Padding="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Click="BatchFolderPicker_Click"/>
+                                </Grid>
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <Button Name="SortAZ" Classes="NoOutline" Padding="8 2" Click="SortAZ_Click">A-Z</Button>
+                                    <Button Name="SortZA" Classes="NoOutline" Padding="8 2" Click="SortZA_Click">Z-A</Button>
+                                    <Button Name="BeginAutomation" Classes="NoOutline" Padding="8 2" Background="#2a6" Foreground="White" Click="BeginAutomation_Click">Begin Automation</Button>
+                                </StackPanel>
+                                <Border Background="#3000" CornerRadius="4">
+                                    <ListBox Name="BatchFileList" MaxHeight="240" ItemsSource="{Binding BatchItems}">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate DataType="local:BatchItem">
+                                                <Border Padding="4 2">
+                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                        <Border Background="#2000" CornerRadius="2" Width="32" Height="32">
+                                                            <Image Source="{Binding Thumbnail}" Stretch="Uniform"/>
+                                                        </Border>
+                                                        <StackPanel VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding FileName}" FontSize="12" FontWeight="SemiBold"/>
+                                                            <TextBlock Text="{Binding Status}" FontSize="10" Foreground="#888"/>
+                                                        </StackPanel>
+                                                        <Border CornerRadius="8" Width="10" Height="10" VerticalAlignment="Center" Margin="4,0,0,0"
+                                                                Background="{Binding Status, Converter={x:Static local:BatchItemConverter.Instance}}"/>
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Border>
+                                <Label Name="BatchStatus" FontSize="11" Foreground="#aaa" Content="No files loaded"/>
+                            </StackPanel>
                         </TabItem>
                     </TabControl>
                 </TabItem>

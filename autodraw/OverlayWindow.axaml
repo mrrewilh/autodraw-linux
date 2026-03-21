@@ -1,0 +1,18 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Autodraw.OverlayWindow"
+        Title="Overlay"
+        WindowState="FullScreen"
+        Topmost="True"
+        ShowInTaskbar="False"
+        Background="#01000000"
+        Opacity="0.01"
+        SystemDecorations="None"
+        Cursor="Cross">
+    <Grid>
+        <TextBlock Text="Click anywhere to pick coordinates"
+                   HorizontalAlignment="Center" VerticalAlignment="Top"
+                   Margin="0,40,0,0" FontSize="18" Foreground="#444"
+                   Opacity="10"/>
+    </Grid>
+</Window>
